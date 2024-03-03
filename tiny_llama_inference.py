@@ -1,7 +1,9 @@
+import sys
+import transformers
 from transformers import AutoTokenizer
-import transformers 
 import torch
 import pandas as pd
+sys.path.append(r"/home/hwalke37/")
 from HKLLM.promptlm.utils.data import prepare_dataset_for_inference, generate_shot_examples
 from HKLLM.promptlm.utils.metrics import sample_recall, sample_accuracy, sample_f1_score, sample_precision
 from HKLLM.promptlm.utils.parsers import multc_parser, parse_output_for_answer
@@ -10,6 +12,7 @@ model = "PY007/TinyLlama-1.1B-Chat-v0.1"
 
 data = r"/home/hwalke37/dataset/300_gt_deided_case.csv"
 df = pd.read_csv(data)
+
 
 dataset = prepare_dataset_for_inference(df=df,text_col="PublicNarrative",class_col="BHR_type",sample_size=297)
 tokenizer = AutoTokenizer.from_pretrained(model)
