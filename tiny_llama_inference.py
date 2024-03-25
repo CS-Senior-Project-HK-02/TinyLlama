@@ -55,10 +55,13 @@ for prompt in full_prompts:
         prompt,
         do_sample = True,
         top_k=10,
+        top_p=0.95,
+        temperature = 0.7,
         num_return_sequences=1,
         repetition_penalty=1.5,
         eos_token_id=tokenizer.eos_token_id,
         max_new_tokens=500,
+        num_return_sequences=1,
     )
     model_output = sequences[0]['generated_text']
     print(model_output)
