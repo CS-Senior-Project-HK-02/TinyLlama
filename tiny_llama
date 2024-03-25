@@ -8,8 +8,8 @@ from transformers import (
     TrainingArguments,
     pipeline,
     logging,
-    #LlamaModel,
-    #LlamaConfig,
+    LlamaModel,
+    LlamaConfig,
 )
 from peft import LoraConfig
 from trl import SFTTrainer
@@ -17,7 +17,7 @@ from torch.utils.data import Dataset,DataLoader
 import json
 
 # Model from Hugging Face hub
-base_model = "PY007/TinyLlama-1.1B-step-50K-105b"
+base_model = "TinyLlama/TinyLlama-1.1B-step-50K-105b"   #THIS IS THE CORRECT MODEL!!!!!!!!
 
 class MyDataset(Dataset):
   def __init__(self, json_file):
@@ -37,7 +37,7 @@ class MyDataset(Dataset):
     return (input, target)
 
 # New instruction dataset
-data_files = r"/home/hwalke37/dataset/data_instruct.json"           #change
+data_files = r"/home/hwalke37/dataset/data_instruct.json"
 dataset = load_dataset('json',data_files=data_files,split="train")
 
 
@@ -60,7 +60,7 @@ quant_config = BitsAndBytesConfig(
 model = AutoModelForCausalLM.from_pretrained(
     base_model,
     quantization_config=quant_config,
-    device_map="auto"
+    device_map={"":0}
 )
 model.config.use_cache = False
 model.config.pretraining_tp = 1
@@ -78,8 +78,8 @@ peft_params = LoraConfig(
 )
 
 training_params = TrainingArguments(
-    output_dir="./workspace",                #maybe change
-    num_train_epochs=5,
+    output_dir="./tiny_results",                
+    num_train_epochs=1,
     per_device_train_batch_size=2,
     gradient_accumulation_steps=1,
     optim="paged_adamw_32bit",
@@ -100,18 +100,19 @@ training_params = TrainingArguments(
 
 
 trainer = SFTTrainer(
-    model=model,
+    model,
     train_dataset=dataset,
     eval_dataset=None,
     peft_config=peft_params,
     dataset_text_field="prompt",
-    max_seq_length=None,
     tokenizer=tokenizer,
     args=training_params,
-    packing=False,
+    packing =False,
+    max_seq_length=None,
 )
 
 trainer.train()
 
 trainer.model.save_pretrained(new_model)
+trainer.tokenizer.save_pretrained(new_model)
 model.config.use_cache=True
