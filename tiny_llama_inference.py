@@ -54,10 +54,9 @@ for prompt in full_prompts:
     sequences = pipe(
         prompt,
         do_sample = True,
-        top_k=10,
+        top_k=150,
         top_p=0.95,
         temperature = 0.7,
-        num_return_sequences=1,
         repetition_penalty=1.5,
         eos_token_id=tokenizer.eos_token_id,
         max_new_tokens=500,
