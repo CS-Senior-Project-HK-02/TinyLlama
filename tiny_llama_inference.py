@@ -13,7 +13,7 @@ from HKLLM.hkllm.promptlm.utils.parsers import multc_parser, parse_output_for_an
 def import_class_definitions():
     class_def = "Behavioral Health: Can only be applied to people\nMental Health: Involving an individual with a diagnosed mental disorder, like schizophrenia or sucidal ideations\nDomestic Social: Involving multiple Individuals in a home setting, like husband/wife or parent/children domestic disputes\nNonDomestic Social: Involving multiple individuals not in a home setting, like comitting crimes on those not related to the perpretrator (This is rare by the way)\nSubstance Abuse: Individual with persistent drug/alchohol abuse problems, Posession alone is not enough to indicate abuse problems."
 
-def inference_model(model_name, system_prompt = "", use_class_definitions = False, use_knowledge_files = False, override = False):
+def inference_model(model_name, system_prompt = "", lora_adapter=None, use_class_definitions = False, use_knowledge_files = False, override = False):
 
     model_name = model_name
 
@@ -21,13 +21,14 @@ def inference_model(model_name, system_prompt = "", use_class_definitions = Fals
     df = pd.read_csv(data)
     class_def = import_class_definitions()
     dataset = prepare_dataset_for_inference(df=df,text_col="PublicNarrative",class_col="BHR_type",sample_size=297, supp_columns = ["Supp", "OfficerNarrative"])
-    device = "cpu"
+    #device = "cpu"
 
     
     quant_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type='nf4',
                 bnb_4bit_use_double_quant=True,
+                
                 
             )
     model = AutoModelForCausalLM.from_pretrained(
@@ -38,6 +39,9 @@ def inference_model(model_name, system_prompt = "", use_class_definitions = Fals
             device_map="auto",
             trust_remote_code=True,
         )
+    if lora_adapter:
+            lora_adapter_name = lora_adapter
+            model.load_adapter(lora_adapter_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
@@ -70,11 +74,11 @@ def inference_model(model_name, system_prompt = "", use_class_definitions = Fals
         sequences = pipe(
             prompt,
             do_sample = True,
-            top_k=150,
+            top_k=5,
             top_p=0.9,
             temperature = 0.95,
             repetition_penalty=1.5,
-            #eos_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id,
             max_new_tokens=500,
             num_return_sequences=1,
         )
@@ -109,7 +113,7 @@ def inference_model(model_name, system_prompt = "", use_class_definitions = Fals
                     
 
 system_prompt = "[INST]You are the police department's virtual assistant, you are going to read the following narratives and return whether they are related to behavioral health, All samples only have one answer.  The classification of the sample is based on the current report, references to past events inside of the report, do not affect the classification of the report. For your response you must always use <Tag> [Answer] </Tag>. you will tag these as either Domestic Social, NonDomestic Social, Mental Health, Substance Abuse or Other, The text you must classify is as follows: [/INST]"
-inference_model(model_name=r"/home/hwalke37/workspace/tiny-llama-fine-tuned-model", system_prompt = system_prompt, use_class_definitions=True, override=True)    
+inference_model(model_name=r"/home/hwalke37/workspace/tiny-llama-fine-tuned-model-3", system_prompt = system_prompt, use_class_definitions=True, override=True)    
 """accuracy = sample_accuracy(y_true=labels,y_pred=extracted_answers)
 precision = sample_precision(y_true=labels,y_pred=extracted_answers,macro=True)
 recall = sample_recall(y_true=labels,y_pred=extracted_answers,macro=True)
