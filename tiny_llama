@@ -47,7 +47,7 @@ dataset = load_dataset('json',data_files=data_files,split="train")
 
 
 # Fine-tuned model
-new_model = "tiny-llama-fine-tuned-model-3"            
+new_model = "tiny-llama-fine-tuned-model-4"            
 
 compute_dtype = getattr(torch, "float16")
 
@@ -71,15 +71,15 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 peft_params = LoraConfig(
-    lora_alpha=16,
+    lora_alpha=24,
     lora_dropout=0.05,
-    r=64,
+    r=128,
     bias="none",
     task_type="CAUSAL_LM",
 )
 
 training_params = TrainingArguments(
-    output_dir="./tiny_results-new-3",                
+    output_dir="./tiny_results-new-4",                
     num_train_epochs=5,
     per_device_train_batch_size=2,
     gradient_accumulation_steps=1,
