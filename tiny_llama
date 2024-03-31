@@ -16,6 +16,7 @@ from trl import SFTTrainer
 from torch.utils.data import Dataset,DataLoader
 import json
 
+
 # Model from Hugging Face hub
 base_model = "TinyLlama/TinyLlama-1.1B-step-50K-105b"   #THIS IS THE CORRECT MODEL!!!!!!!!
 
@@ -46,7 +47,7 @@ dataset = load_dataset('json',data_files=data_files,split="train")
 
 
 # Fine-tuned model
-new_model = "tiny-llama-pn-annotate-hkllm-ksu-internal"            
+new_model = "tiny-llama-fine-tuned-model-3"            
 
 compute_dtype = getattr(torch, "float16")
 
@@ -60,7 +61,7 @@ quant_config = BitsAndBytesConfig(
 model = AutoModelForCausalLM.from_pretrained(
     base_model,
     quantization_config=quant_config,
-    device_map={"":0}
+    device_map="auto"
 )
 model.config.use_cache = False
 model.config.pretraining_tp = 1
@@ -71,16 +72,16 @@ tokenizer.padding_side = "right"
 
 peft_params = LoraConfig(
     lora_alpha=16,
-    lora_dropout=0.1,
+    lora_dropout=0.05,
     r=64,
     bias="none",
     task_type="CAUSAL_LM",
 )
 
 training_params = TrainingArguments(
-    output_dir="./tiny_results",                
-    num_train_epochs=1,
-    per_device_train_batch_size=1,
+    output_dir="./tiny_results-new-3",                
+    num_train_epochs=5,
+    per_device_train_batch_size=2,
     gradient_accumulation_steps=1,
     optim="paged_adamw_32bit",
     save_steps=25,
@@ -109,6 +110,7 @@ trainer = SFTTrainer(
     args=training_params,
     packing =False,
     max_seq_length=None,
+    neftune_noise_alpha= True,
 )
 
 trainer.train()
