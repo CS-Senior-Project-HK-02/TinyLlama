@@ -24,17 +24,17 @@ def inference_model(model_name, system_prompt = "", lora_adapter=None, use_class
     #device = "cpu"
 
     
-    quant_config = BitsAndBytesConfig(
+    """quant_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type='nf4',
                 bnb_4bit_use_double_quant=True,
                 
                 
-            )
+            )"""
     model = AutoModelForCausalLM.from_pretrained(
             model_name,
             #load_in_4bit=False,
-            quantization_config=quant_config,
+            #quantization_config=quant_config,
             torch_dtype=torch.bfloat16,
             device_map="auto",
             trust_remote_code=True,
@@ -74,7 +74,7 @@ def inference_model(model_name, system_prompt = "", lora_adapter=None, use_class
         sequences = pipe(
             prompt,
             do_sample = True,
-            top_k=5,
+            top_k=150,
             top_p=0.9,
             temperature = 0.95,
             repetition_penalty=1.5,
@@ -113,7 +113,7 @@ def inference_model(model_name, system_prompt = "", lora_adapter=None, use_class
                     
 
 system_prompt = "[INST]You are the police department's virtual assistant, you are going to read the following narratives and return whether they are related to behavioral health, All samples only have one answer.  The classification of the sample is based on the current report, references to past events inside of the report, do not affect the classification of the report. For your response you must always use <Tag> [Answer] </Tag>. you will tag these as either Domestic Social, NonDomestic Social, Mental Health, Substance Abuse or Other, The text you must classify is as follows: [/INST]"
-inference_model(model_name=r"/home/hwalke37/workspace/tiny-llama-fine-tuned-model-3", system_prompt = system_prompt, use_class_definitions=True, override=True)    
+inference_model(model_name=r"/home/hwalke37/workspace/tiny-llama-fine-tuned-model-8", system_prompt = system_prompt, use_class_definitions=True, override=True)    
 """accuracy = sample_accuracy(y_true=labels,y_pred=extracted_answers)
 precision = sample_precision(y_true=labels,y_pred=extracted_answers,macro=True)
 recall = sample_recall(y_true=labels,y_pred=extracted_answers,macro=True)
