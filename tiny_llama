@@ -47,20 +47,20 @@ dataset = load_dataset('json',data_files=data_files,split="train")
 
 
 # Fine-tuned model
-new_model = "tiny-llama-fine-tuned-model-4"            
+new_model = "tiny-llama-fine-tuned-model-8"            
 
 compute_dtype = getattr(torch, "float16")
 
-quant_config = BitsAndBytesConfig(
+"""quant_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
     bnb_4bit_compute_dtype=compute_dtype,
     bnb_4bit_use_double_quant=False,
-)
+)"""
 
 model = AutoModelForCausalLM.from_pretrained(
     base_model,
-    quantization_config=quant_config,
+    #quantization_config=quant_config,
     device_map="auto"
 )
 model.config.use_cache = False
@@ -71,7 +71,7 @@ tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
 peft_params = LoraConfig(
-    lora_alpha=24,
+    lora_alpha=128,
     lora_dropout=0.05,
     r=128,
     bias="none",
@@ -79,8 +79,8 @@ peft_params = LoraConfig(
 )
 
 training_params = TrainingArguments(
-    output_dir="./tiny_results-new-4",                
-    num_train_epochs=5,
+    output_dir="./tiny_results-new-8",                
+    num_train_epochs=2,
     per_device_train_batch_size=2,
     gradient_accumulation_steps=1,
     optim="paged_adamw_32bit",
@@ -110,7 +110,7 @@ trainer = SFTTrainer(
     args=training_params,
     packing =False,
     max_seq_length=None,
-    neftune_noise_alpha= True,
+    neftune_noise_alpha= 10,
 )
 
 trainer.train()
